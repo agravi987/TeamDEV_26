@@ -1,4 +1,4 @@
 # Architecture of the Project
 
-![alt text](architecture.png)
+![alt text](./architecture.png)
 
