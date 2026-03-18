@@ -19,6 +19,8 @@ coverage/
 build/Release
 
 # Environment variables
+backend/.env
+frontend/.env
 .env
 .env.test
 
