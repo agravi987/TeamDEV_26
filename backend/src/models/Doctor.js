@@ -40,6 +40,12 @@ const Doctor = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    avg_rating: {
+      type: DataTypes.DECIMAL(3, 2),
+      allowNull: true,
+      defaultValue: 0.0,
+      comment: 'Auto-calculated average from patient ratings',
+    },
   },
   {
     tableName: 'doctors',

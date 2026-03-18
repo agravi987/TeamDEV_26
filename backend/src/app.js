@@ -10,13 +10,14 @@ const doctorRoutes = require('./routes/doctorRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
 const prescriptionRoutes = require('./routes/prescriptionRoutes');
 const videoSessionRoutes = require('./routes/videoSessionRoutes');
+const ratingRoutes = require('./routes/ratingRoutes');
 
 const app = express();
 
 // ─── Global Middlewares ────────────────────────────────────────
 app.use(helmet()); // Security headers
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+  origin: '*',
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
@@ -24,7 +25,11 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// ─── Health Check ──────────────────────────────────────────────
+// ─── Health check & Root ───────────────────────────────────────
+app.get('/', (req, res) => {
+  res.status(200).send('HealthSync Backend API is running');
+});
+
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -37,6 +42,7 @@ app.use(`${API_PREFIX}/doctors`, doctorRoutes);
 app.use(`${API_PREFIX}/appointments`, appointmentRoutes);
 app.use(`${API_PREFIX}/prescriptions`, prescriptionRoutes);
 app.use(`${API_PREFIX}/video-session`, videoSessionRoutes);
+app.use(`${API_PREFIX}/ratings`, ratingRoutes);
 
 // ─── 404 Handler ──────────────────────────────────────────────
 app.use((req, res) => {

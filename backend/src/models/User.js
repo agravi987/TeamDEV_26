@@ -31,6 +31,18 @@ const User = sequelize.define(
       allowNull: false,
       defaultValue: 'patient',
     },
+    is_email_verified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    email_otp: {
+      type: DataTypes.STRING(10),
+      allowNull: true,
+    },
+    email_otp_expiry: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     tableName: 'users',

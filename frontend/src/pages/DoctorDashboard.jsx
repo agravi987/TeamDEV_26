@@ -3,13 +3,17 @@ import { appointmentsAPI, videoSessionAPI, prescriptionsAPI } from '../services/
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { CalendarCheck, Video, CheckCircle, UploadCloud, Loader2, CalendarX, FileText } from 'lucide-react';
+import { CalendarCheck, Video, CheckCircle, UploadCloud, Loader2, CalendarX, FileText, Clock } from 'lucide-react';
+import VerificationBanner from '../components/VerificationBanner';
+import DeleteAccountButton from '../components/DeleteAccountButton';
+import ScheduleEditor from '../components/ScheduleEditor';
 
 const DoctorDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [scheduleEditorOpen, setScheduleEditorOpen] = useState(false);
   
   // Rx Generation State
   const [selectedAppt, setSelectedAppt] = useState(null);
@@ -39,6 +43,16 @@ const DoctorDashboard = () => {
       fetchAppointments();
     } catch (err) {
       toast.error('Failed to update status');
+    }
+  };
+
+  const handleArchive = async (id) => {
+    try {
+      await appointmentsAPI.archive(id);
+      toast.success('Appointment hidden from dashboard');
+      fetchAppointments();
+    } catch (err) {
+      toast.error('Failed to hide appointment');
     }
   };
 
@@ -111,11 +125,15 @@ const DoctorDashboard = () => {
 
   return (
     <div className="page-wrapper">
+      <VerificationBanner />
       <div className="flex items-center justify-between mb-4" style={{ marginBottom: '2.5rem' }}>
         <div>
           <h1 className="section-title">Doctor Dashboard</h1>
           <p className="section-subtitle">Manage consultations, patients, and e-prescriptions.</p>
         </div>
+        <button className="btn btn-primary" onClick={() => setScheduleEditorOpen(true)}>
+          <Clock size={18} /> Set Working Hours
+        </button>
       </div>
 
       <div className="grid-3 mb-4">
@@ -195,6 +213,16 @@ const DoctorDashboard = () => {
                           <CheckCircle size={14} /> Finalized
                         </span>
                       )}
+                      {(appt.status === 'completed' || appt.status === 'cancelled') && (
+                        <button 
+                          className="btn btn-ghost btn-sm" 
+                          title="Hide from Dashboard" 
+                          style={{ color: 'var(--color-text-muted)', marginLeft: '0.5rem', padding: '0.2rem' }} 
+                          onClick={() => handleArchive(appt.id)}
+                        >
+                          &times;
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -203,6 +231,8 @@ const DoctorDashboard = () => {
           </table>
         </div>
       )}
+
+      <DeleteAccountButton />
 
       {/* Generate Prescription Modal */}
       {selectedAppt && (
@@ -280,6 +310,12 @@ const DoctorDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Schedule Editor Modal */}
+      <ScheduleEditor 
+        isOpen={scheduleEditorOpen} 
+        onClose={() => setScheduleEditorOpen(false)} 
+      />
     </div>
   );
 };

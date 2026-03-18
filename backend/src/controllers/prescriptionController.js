@@ -1,6 +1,7 @@
 const { body } = require('express-validator');
 const { Prescription, Appointment } = require('../models');
 const { successResponse, errorResponse } = require('../utils/response');
+const { sendPrescriptionEmail } = require('../utils/otp');
 
 // ─── Validation Rules ─────────────────────────────────────────
 
@@ -82,7 +83,6 @@ const generatePrescription = async (req, res) => {
     // We'll set a placeholder or standard URL format
     const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${fileKey}`;
 
-    // 3. Save to DB
     const prescription = await Prescription.create({
       appointment_id,
       file_url: fileUrl,
@@ -90,6 +90,16 @@ const generatePrescription = async (req, res) => {
       notes: notes || null,
       uploaded_by: req.user.id,
     });
+
+    // Send prescription email to patient (non-blocking)
+    if (appointment.patient) {
+      sendPrescriptionEmail({
+        patientEmail: appointment.patient.email,
+        patientName: appointment.patient.name,
+        doctorName: appointment.doctor.name,
+        appointmentTime: appointment.appointment_time,
+      }).catch(err => console.error('[Mailer] Prescription email failed:', err));
+    }
 
     return successResponse(res, prescription, 'Prescription generated and uploaded successfully', 201);
   } catch (err) {
@@ -131,6 +141,19 @@ const uploadPrescription = async (req, res) => {
       notes: notes || null,
       uploaded_by: req.user.id,
     });
+
+    // Send prescription email to patient (non-blocking)
+    const { User } = require('../models');
+    const patient = await User.findByPk(appointment.patient_id);
+    const doctor = await User.findByPk(appointment.doctor_id);
+    if (patient && doctor) {
+      sendPrescriptionEmail({
+        patientEmail: patient.email,
+        patientName: patient.name,
+        doctorName: doctor.name,
+        appointmentTime: appointment.appointment_time,
+      }).catch(err => console.error('[Mailer] Prescription email failed:', err));
+    }
 
     return successResponse(res, prescription, 'Prescription uploaded successfully', 201);
   } catch (err) {

@@ -32,7 +32,9 @@ const Navbar = () => {
 
         {isAuthenticated ? (
           <div className="flex items-center gap-3">
-            <Link to="/doctors" className="btn btn-ghost btn-sm">Find Doctors</Link>
+            {user?.role !== 'doctor' && (
+              <Link to="/doctors" className="btn btn-ghost btn-sm">Find Doctors</Link>
+            )}
             
             <Link 
               to={user?.role === 'doctor' ? '/doctor-dashboard' : '/dashboard'} 

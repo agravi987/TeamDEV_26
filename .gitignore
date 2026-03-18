@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+jspm_packages/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Coverage/Build
+coverage/
+build/Release
+
+# Environment variables
+.env
+.env.test
+
+# IDE/Tools
+.vscode/
+.idea/

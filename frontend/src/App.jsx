@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 // Pages (to be created)
 import Login from './pages/Login';
 import Register from './pages/Register';
+import VerifyEmail from './pages/VerifyEmail';
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
 import DoctorsList from './pages/DoctorsList';
@@ -25,6 +26,7 @@ function App() {
               <Route path="/" element={<Navigate to="/doctors" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/doctors" element={<DoctorsList />} />
 
               {/* Protected Routes - Any Authenticated User */}

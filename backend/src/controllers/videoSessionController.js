@@ -1,5 +1,5 @@
 const { body } = require('express-validator');
-const { Appointment } = require('../models');
+const { Appointment, User } = require('../models');
 const { successResponse, errorResponse } = require('../utils/response');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
@@ -61,6 +61,19 @@ const createVideoSession = async (req, res) => {
       meeting_link: meetingLink,
       status: appointment.status === 'pending' ? 'confirmed' : appointment.status,
     });
+
+    // Asynchronously send SNS notification
+    const sns = require('../utils/sns');
+    const topicArn = process.env.SNS_CLINIC_TOPIC_ARN;
+    if (topicArn) {
+      const patient = await User.findByPk(appointment.patient_id);
+      const doctor = await User.findByPk(appointment.doctor_id);
+      sns.publishToTopic(
+        topicArn,
+        'Video Session Link Generated',
+        `Patient ${patient.name}, your video consultation link with Dr. ${doctor.name} is ready: ${meetingLink}`
+      );
+    }
 
     return successResponse(
       res,

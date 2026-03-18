@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { getAllDoctors, getDoctorById, updateDoctorProfile } = require('../controllers/doctorController');
+const { getAllDoctors, getDoctorById, updateDoctorProfile, getAvailableSlots } = require('../controllers/doctorController');
 const { authenticate, authorize } = require('../middlewares/authMiddleware');
 
 // GET /doctors – public
 router.get('/', getAllDoctors);
+
+// GET /doctors/:id/available-slots?date=YYYY-MM-DD – public
+router.get('/:id/available-slots', getAvailableSlots);
 
 // GET /doctors/:id – public
 router.get('/:id', getDoctorById);
@@ -13,3 +16,4 @@ router.get('/:id', getDoctorById);
 router.patch('/profile', authenticate, authorize('doctor'), updateDoctorProfile);
 
 module.exports = router;
+

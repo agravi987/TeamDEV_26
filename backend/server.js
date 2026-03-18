@@ -10,17 +10,17 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('✅  Database connection established successfully.');
 
-    // Sync models (use { force: false } in production, { alter: true } in dev)
+    // Sync models (use { force: false } in production, { alter: false } in dev to prevent repetitive index creation)
     const syncOptions =
-      process.env.NODE_ENV === 'development' ? { alter: true } : { force: false };
+      process.env.NODE_ENV === 'development' ? { alter: false } : { force: false };
 
     await sequelize.sync(syncOptions);
     console.log('✅  Database models synchronized.');
 
-    app.listen(PORT, () => {
-      console.log(`🚀  Server running on http://localhost:${PORT}`);
-      console.log(`📋  API docs: http://localhost:${PORT}/api/v1`);
-      console.log(`❤️   Health check: http://localhost:${PORT}/health`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀  Server running on http://0.0.0.0:${PORT}`);
+      console.log(`📋  API docs: http://0.0.0.0:${PORT}/api/v1`);
+      console.log(`❤️   Health check: http://0.0.0.0:${PORT}/health`);
     });
   } catch (err) {
     console.error('❌  Failed to start server:', err);

@@ -4,6 +4,7 @@ const {
   bookAppointment,
   getUserAppointments,
   updateAppointmentStatus,
+  archiveAppointment,
   bookAppointmentValidators,
 } = require('../controllers/appointmentController');
 const { authenticate, authorize } = require('../middlewares/authMiddleware');
@@ -17,5 +18,8 @@ router.get('/:userId', authenticate, getUserAppointments);
 
 // PATCH /appointments/:id/status – doctor or admin
 router.patch('/:id/status', authenticate, authorize('doctor', 'admin'), updateAppointmentStatus);
+
+// PATCH /appointments/:id/archive - doctor only
+router.patch('/:id/archive', authenticate, authorize('doctor'), archiveAppointment);
 
 module.exports = router;

@@ -3,6 +3,7 @@ const User = require('./User');
 const Doctor = require('./Doctor');
 const Appointment = require('./Appointment');
 const Prescription = require('./Prescription');
+const Rating = require('./Rating');
 
 // ─── Associations ─────────────────────────────────────────────
 
@@ -22,4 +23,16 @@ Appointment.belongsTo(User, { foreignKey: 'patient_id', as: 'patient' });
 Appointment.hasMany(Prescription, { foreignKey: 'appointment_id', as: 'prescriptions', onDelete: 'CASCADE' });
 Prescription.belongsTo(Appointment, { foreignKey: 'appointment_id', as: 'appointment' });
 
-module.exports = { sequelize, User, Doctor, Appointment, Prescription };
+// Appointment <-> Rating (one-to-one)
+Appointment.hasOne(Rating, { foreignKey: 'appointment_id', as: 'rating', onDelete: 'CASCADE' });
+Rating.belongsTo(Appointment, { foreignKey: 'appointment_id', as: 'appointment' });
+
+// User (patient) <-> Rating
+User.hasMany(Rating, { foreignKey: 'patient_id', as: 'givenRatings' });
+Rating.belongsTo(User, { foreignKey: 'patient_id', as: 'patient' });
+
+// User (doctor) <-> Rating
+User.hasMany(Rating, { foreignKey: 'doctor_id', as: 'receivedRatings' });
+Rating.belongsTo(User, { foreignKey: 'doctor_id', as: 'doctor' });
+
+module.exports = { sequelize, User, Doctor, Appointment, Prescription, Rating };

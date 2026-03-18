@@ -1,7 +1,8 @@
-const { body, param } = require('express-validator');
+const { body } = require('express-validator');
 const { Appointment, User, Doctor } = require('../models');
 const { successResponse, errorResponse } = require('../utils/response');
-const { v4: uuidv4 } = require('uuid');
+const { sendAppointmentBookedEmail, sendAppointmentStatusEmail } = require('../utils/otp');
+const { Op } = require('sequelize');
 
 // ─── Validation Rules ─────────────────────────────────────────
 
@@ -22,31 +23,51 @@ const bookAppointment = async (req, res) => {
     const { doctor_id, appointment_time, reason } = req.body;
     const patient_id = req.user.id;
 
-    // Verify doctor exists and is actually a doctor
+    // Verify doctor exists
     const doctor = await User.findOne({ where: { id: doctor_id, role: 'doctor' } });
     if (!doctor) {
       return errorResponse(res, 'Doctor not found', 404);
     }
 
-    // Prevent double-booking same slot
+    const selectedTime = new Date(appointment_time);
+    const windowStart = new Date(selectedTime.getTime() - 30 * 60 * 1000); // -30 min
+    const windowEnd   = new Date(selectedTime.getTime() + 30 * 60 * 1000); // +30 min
+
+    // Prevent double-booking within ±30 min window for the same doctor
     const conflict = await Appointment.findOne({
       where: {
         doctor_id,
-        appointment_time,
         status: ['pending', 'confirmed'],
+        appointment_time: { [Op.between]: [windowStart, windowEnd] },
       },
     });
     if (conflict) {
-      return errorResponse(res, 'This slot is already booked for the selected doctor', 409);
+      return errorResponse(
+        res,
+        'This time slot is not available. Please choose a slot at least 30 minutes away from an existing appointment.',
+        409
+      );
     }
 
     const appointment = await Appointment.create({
       doctor_id,
       patient_id,
-      appointment_time,
+      appointment_time: selectedTime,
       reason: reason || null,
       status: 'pending',
     });
+
+    const patient = await User.findByPk(patient_id);
+
+    // Send email notifications (non-blocking)
+    sendAppointmentBookedEmail({
+      patientEmail: patient.email,
+      patientName: patient.name,
+      doctorEmail: doctor.email,
+      doctorName: doctor.name,
+      appointmentTime: selectedTime,
+      reason,
+    }).catch(err => console.error('[Mailer] Appointment booked email failed:', err));
 
     return successResponse(res, appointment, 'Appointment booked successfully', 201);
   } catch (err) {
@@ -63,7 +84,6 @@ const getUserAppointments = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // Only allow users to view their own appointments unless they are admin
     if (req.user.id !== userId && req.user.role !== 'admin') {
       return errorResponse(res, 'Access denied', 403);
     }
@@ -76,16 +96,14 @@ const getUserAppointments = async (req, res) => {
     let appointments;
     if (user.role === 'doctor') {
       appointments = await Appointment.findAll({
-        where: { doctor_id: userId },
+        where: { doctor_id: userId, is_archived: false },
         include: [{ model: User, as: 'patient', attributes: ['id', 'name', 'email'] }],
         order: [['appointment_time', 'ASC']],
       });
     } else {
       appointments = await Appointment.findAll({
         where: { patient_id: userId },
-        include: [
-          { model: User, as: 'doctor', attributes: ['id', 'name', 'email'] },
-        ],
+        include: [{ model: User, as: 'doctor', attributes: ['id', 'name', 'email'] }],
         order: [['appointment_time', 'ASC']],
       });
     }
@@ -116,12 +134,32 @@ const updateAppointmentStatus = async (req, res) => {
       return errorResponse(res, 'Appointment not found', 404);
     }
 
-    // Only the doctor of this appointment or admin can change status
-    if (appointment.doctor_id !== req.user.id && req.user.role !== 'admin') {
+    const isDoctor = appointment.doctor_id === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+    const isPatient = appointment.patient_id === req.user.id;
+
+    if (!isDoctor && !isAdmin && !isPatient) {
       return errorResponse(res, 'Access denied', 403);
     }
 
+    if (isPatient && !['cancelled', 'completed'].includes(status)) {
+      return errorResponse(res, 'Patients can only mark appointments as cancelled or completed', 403);
+    }
+
     await appointment.update({ status });
+
+    // Send status update email to patient (non-blocking)
+    const patient = await User.findByPk(appointment.patient_id);
+    const doctor = await User.findByPk(appointment.doctor_id);
+
+    sendAppointmentStatusEmail({
+      patientEmail: patient.email,
+      patientName: patient.name,
+      doctorName: doctor.name,
+      appointmentTime: appointment.appointment_time,
+      status,
+    }).catch(err => console.error('[Mailer] Status email failed:', err));
+
     return successResponse(res, appointment, 'Appointment status updated');
   } catch (err) {
     console.error('[Appointments] Update status error:', err);
@@ -129,9 +167,35 @@ const updateAppointmentStatus = async (req, res) => {
   }
 };
 
+/**
+ * PATCH /appointments/:id/archive
+ * Hide an appointment from the doctor's dashboard
+ */
+const archiveAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const appointment = await Appointment.findByPk(id);
+    if (!appointment) {
+      return errorResponse(res, 'Appointment not found', 404);
+    }
+
+    if (appointment.doctor_id !== req.user.id) {
+      return errorResponse(res, 'Access denied', 403);
+    }
+
+    await appointment.update({ is_archived: true });
+    return successResponse(res, appointment, 'Appointment hidden from dashboard');
+  } catch (err) {
+    console.error('[Appointments] Archive error:', err);
+    return errorResponse(res, 'Failed to archive appointment', 500);
+  }
+};
+
 module.exports = {
   bookAppointment,
   getUserAppointments,
   updateAppointmentStatus,
+  archiveAppointment,
   bookAppointmentValidators,
 };

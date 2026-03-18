@@ -11,7 +11,8 @@ const Register = () => {
     email: '', 
     password: '',
     role: 'patient',
-    specialization: '' // Used only if role === doctor
+    specialization: '',
+    experience_years: '',
   });
   const [loading, setLoading] = useState(false);
   
@@ -26,16 +27,11 @@ const Register = () => {
       setLoading(true);
       const res = await authAPI.register(formData);
       login(res.data.data.token, res.data.data.user);
-      
-      toast.success('Registration successful!');
-      if (res.data.data.user.role === 'doctor') {
-        navigate('/doctor-dashboard');
-      } else {
-        navigate('/dashboard');
-      }
+      toast.success('Account created! Please verify your email.');
+      // Always go to verify-email page first
+      navigate('/verify-email');
     } catch (err) {
       if (err.response?.data?.errors) {
-        // Validation errors from express-validator
         err.response.data.errors.forEach(error => {
           toast.error(`${error.field}: ${error.message}`);
         });
@@ -62,7 +58,7 @@ const Register = () => {
           <button 
             type="button" 
             className={`tab ${formData.role === 'patient' ? 'active' : ''}`}
-            onClick={() => setFormData({ ...formData, role: 'patient' })}
+            onClick={() => setFormData({ ...formData, role: 'patient', specialization: '', experience_years: '' })}
           >
             I'm a Patient
           </button>
@@ -92,10 +88,25 @@ const Register = () => {
           </div>
 
           {formData.role === 'doctor' && (
-            <div className="form-group">
-              <label className="form-label">Specialization</label>
-              <input type="text" name="specialization" className="form-input" placeholder="e.g. Cardiologist, Dermatologist" value={formData.specialization} onChange={handleChange} required />
-            </div>
+            <>
+              <div className="form-group">
+                <label className="form-label">Specialization</label>
+                <input type="text" name="specialization" className="form-input" placeholder="e.g. Cardiologist, Dermatologist" value={formData.specialization} onChange={handleChange} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Years of Experience</label>
+                <input 
+                  type="number" 
+                  name="experience_years" 
+                  className="form-input" 
+                  placeholder="e.g. 5" 
+                  min="0" max="60"
+                  value={formData.experience_years} 
+                  onChange={handleChange} 
+                  required 
+                />
+              </div>
+            </>
           )}
 
           <button type="submit" className="btn btn-primary btn-full mt-2" disabled={loading}>

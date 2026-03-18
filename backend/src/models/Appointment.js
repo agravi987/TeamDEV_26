@@ -47,6 +47,11 @@ const Appointment = sequelize.define(
       allowNull: true,
       comment: 'Post-consultation notes by the doctor',
     },
+    is_archived: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Whether the doctor has hidden this appointment from their dashboard',
+    },
   },
   {
     tableName: 'appointments',
