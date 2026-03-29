@@ -3,6 +3,12 @@
 <div align="center">
   <img src="./architecture.png" alt="System Architecture" width="800"/>
 </div>
+<div align="center">
+  <img src="./website-dashboard.png" alt="Website Dashboard" width="800"/>
+</div>
+<div align="center">
+  <img src="./hosted-in-aws.png" alt="Hosted in AWS" width="800"/>
+</div>
 
 ---
 
