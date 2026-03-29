@@ -1,71 +1,76 @@
-# Clinic Management System
+# 🏥 Cloud-Native Clinic Management System
 
-A comprehensive, production-ready Cloud Clinic Management System with role-based dashboards (Patient/Doctor), video consultations, dynamically generated PDF prescriptions, and scalable cloud infrastructure.
+<div align="center">
+  <img src="./architecture.png" alt="System Architecture" width="800"/>
+</div>
 
-## Architecture
+---
 
-![Architecture Diagram](./architecture.png)
+A highly scalable, production-ready **Telemedicine and Clinic Management Platform** engineered with a modern microservices-oriented architecture. It provides a seamless digital healthcare experience featuring role-based workflows, integrated video consultations, dynamically generated resilient PDF prescriptions, and an enterprise-grade cloud infrastructure deployed on AWS.
 
-## Overview
+## 🌟 Key Engineering Highlights
 
-The platform provides a seamless digital healthcare experience where patients can book appointments with doctors based on specialization, participate in secure video sessions, and manage their health records and prescriptions securely.
+- **Role-Based Access Control (RBAC)**: Tailored, secure experiences for `Patients` (scheduling, provider discovery, records) and `Doctors` (schedule management, teleconsult, Rx generation).
+- **Embedded Telemedicine**: High-quality, real-time video consultations directly integrated within the dashboard securely powered by the **Jitsi Meet API**.
+- **Automated Digital Prescriptions**: Doctors populate Rx data directly from the UI; the backend dynamically compiles a professional PDF (using `pdfkit`) and securely archives it natively to **AWS S3 Bucket** streams via `multer-s3`.
+- **Multi-Channel Verification**: Reliable and instantaneous user validation utilizing **Email OTP (AWS SES / Nodemailer)** and **SMS notifications (AWS SNS)**.
+- **Robust Security Posture**: Protected by strict stateless JWT-based session management, bcrypt password hashing (12 rounds), rigorous request sanitization via `express-validator`, and zero-trust HTTP header security through `Helmet.js`.
 
-The repository is modularized into two main services:
-- **[Frontend](./frontend/)**: A responsive React (Vite) application utilizing React Router and a customizable CSS design system.
-- **[Backend](./backend/)**: A robust Express.js API connecting to MySQL (Sequelize ORM) and AWS Services (S3, SES, SNS) for cloud storage and communication.
+## 🏗️ Architecture & Technologies
 
-## Key Features
+The platform is strictly decoupled into a React frontend client and a RESTful backend API service to enable independent vertical and horizontal scaling.
 
-### Users & Authentication
-- **Role-based Access**: Dedicated features for `Patient` and `Doctor` profile types.
-- **Secure Authentication**: JWT-based session management, securely hashed passwords with bcrypt.
-- **Verification**: OTP via Email (AWS SES / Nodemailer) and SMS (AWS SNS) for reliable user validation.
-- **Account Control**: Data privacy compliance with complete account deletion options.
-
-### Consultations & Appointments
-- **Appointment Lifecycle**: Patients browse doctors by specialization to book slots. Doctors review, accept, complete, or archive past appointments.
-- **Telemedicine Sessions**: Easy "Join Video Session" endpoints that seamlessly launch secure Jitsi Meet iframes.
-
-### Prescriptions as PDF
-- Complete Rx directly from the dashboard. The backend dynamically merges notes and details into a professional PDF using `pdfkit`.
-- Automated, secure upload to **AWS S3** and rapid retrieval for patient download.
-
-## Technology Stack
-
-| Layer | Tools & Technologies |
+| Layer | Technologies Leveraged |
 |---|---|
-| **Frontend** | React 18, Vite, React Router v6, Axios, Lucide Icons, Custom CSS |
-| **Backend API** | Node.js 20, Express, Express-Validator, Helmet, Morgan |
-| **Database** | MySQL 8 (Amazon RDS), Sequelize ORM v6 |
-| **Cloud Services** | AWS S3 (Storage), AWS SES (Email), AWS SNS (SMS) |
-| **Video Integration** | Jitsi Meet Iframe API |
-| **Containerization** | Docker, Docker Compose (Ready for AWS ECS/Fargate) |
+| **Frontend SPA** | React 18, Vite, React Router v6, Axios Interceptors, Custom CSS (Dark Theme System) |
+| **Backend API** | Node.js 20, Express.js |
+| **Persistence (DB)** | MySQL 8 (Amazon RDS), Sequelize ORM v6 (Connection Pooling) |
+| **Cloud Integration**| AWS S3 (Storage), AWS SES (Email), AWS SNS (SMS), AWS CloudFront, API Gateway, Elastic Load Balancer |
+| **Containerization**| Docker, Docker Compose (Image optimized for AWS ECS / AWS Fargate) |
+| **Video Integration**| Jitsi Iframe API |
 
-## Getting Started
+## 📚 Technical Documentation
 
-You can run the full stack locally. Ensure both the API and client applications are running simultaneously.
+Explore the detailed system and engineering documentation to understand the architectural design patterns, user workflows, and codebase logic:
+
+- [1️⃣ System Architecture & Cloud Setup](./docs/01-System-Architecture.md)
+- [2️⃣ Core Workflows & User Journeys](./docs/02-Core-Workflows.md)
+- [3️⃣ Backend API & Security Layer](./docs/03-Backend-and-API.md)
+- [4️⃣ Frontend SPA & UI Engine](./docs/04-Frontend-and-UI.md)
+
+*(Refer to the dedicated service-level READMEs at `frontend/README.md` and `backend/README.md` for specific low-level configuration details.)*
+
+## 🚀 Getting Started (Local Development)
+
+The repository consists of two main services that must run concurrently for full operation.
 
 ### 1. Prerequisites
-- Node.js 20+
-- MySQL 8 Instance
-- AWS Account (IAM Credentials for S3 / SES / SNS)
-- Docker (Optional)
+- **Node.js 20+**
+- **MySQL 8** (Local instance or Amazon RDS endpoint)
+- **AWS Cloud Account** (IAM Credentials for S3, SES, SNS interactions)
+- **Docker** (Optional, for containerized local networking)
 
 ### 2. Run the Backend API
-For full database, Docker, and environment variable configuration, please read the [Backend README](./backend/README.md).
+Navigate to the backend service, install the exact dependency tree, and boot the server.
 ```bash
 cd backend
 npm install
+
 # Configure your environment variables
 cp .env.example .env 
+
 npm run dev
 ```
 
-### 3. Run the Frontend Client
-The React app connects to `http://localhost:5000` by default. Read the [Frontend README](./frontend/README.md) for more details.
+### 3. Run the Frontend Web Application
+Navigate to the frontend to launch the Vite HMR development server.
 ```bash
 cd frontend
 npm install
-# Set VITE_API_URL=http://localhost:5000/api/v1 in .env
+
+# Verify backend connectivity within .env (e.g. VITE_API_URL=http://localhost:5000/api/v1)
 npm run dev
 ```
+
+---
+*Engineered to meet modern telemedicine requirements with advanced cloud resiliency and patient-doctor UX seamlessly integrated.*
